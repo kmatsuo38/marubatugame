@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: #eee; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<canvas id="myCanvas" width="480" height="320"></canvas>
+
+<script>
+	alert("playerは青、NPCは赤です");
+	
+	const canvas = document.getElementById('myCanvas');
+	const ctx = canvas.getContext('2d');
+	var lineHeight = canvas.height*0.8/3;//線の設定
+	var lineWidth = canvas.width*0.8/3;
+	var grid=[[0,0,0],[0,0,0],[0,0,0]];//各マスの所有者を保持。(0:なし,1:player,2:NPC)
+
+//マス目を描画関数
+function drawSquare() {
+	ctx.beginPath();
+	//横線
+	ctx.rect( canvas.width*0.1, canvas.height/10, canvas.width*8/10, canvas.height/100);
+	ctx.rect( canvas.width*0.1, lineHeight+canvas.height/10, canvas.width*8/10, canvas.height/100); 
+	ctx.rect( canvas.width*0.1, lineHeight*2+canvas.height/10, canvas.width*8/10, canvas.height/100);
+	ctx.rect( canvas.width*0.1, lineHeight*3+canvas.height/10, canvas.width*8/10, canvas.height/100);
+	ctx.rect( canvas.width*0.1, canvas.height/10, canvas.width/100, canvas.height*8/10);
+	//縦線
+	ctx.rect( lineWidth+canvas.width*0.1, canvas.height/10, canvas.width/100, canvas.height*8/10);
+	ctx.rect( lineWidth*2+canvas.width*0.1, canvas.height/10, canvas.width/100, canvas.height*8/10);
+	ctx.rect( lineWidth*3+canvas.width*0.1, canvas.height/10, canvas.width/100, canvas.height*8/10);
+
+	ctx.fillStyle = "#000000";
+	ctx.fill();
+	ctx.closePath();
+}
+//描画関数
+function draw() {
+	//canvasをリセット
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+	
+	drawSquare() ;//マス目を描画
+	//各マスを所有者の色に変える。
+	for(let i =0; i < 3; i++){
+		for(let j=0; j< 3;j++){
+			if(grid[i][j]==1){
+				//player側を青
+				ctx.beginPath();
+				ctx.rect( lineWidth*j+canvas.width*0.1+canvas.width/100, canvas.height/100+lineHeight*i+canvas.height/10, lineWidth-canvas.width/100, lineHeight-canvas.height/100); 
+				ctx.fillStyle = "#0067C0";//青のカラーコード
+				ctx.fill();
+				ctx.closePath();		
+			}else if(grid[i][j]==2){
+				//NPC側を赤
+				ctx.beginPath();
+				ctx.rect( lineWidth*j+canvas.width*0.1+canvas.width/100, canvas.height/100+lineHeight*i+canvas.height/10, lineWidth-canvas.width/100, lineHeight-canvas.height/100); 
+				ctx.fillStyle = "#F15B5B";//赤のカラーコード
+				ctx.fill();
+				ctx.closePath();
+			}	
+		}
+	}
+}
+//プレイヤーのクリックを認識
+function onClick(e) {
+    /* rectでcanvasの絶対座標位置を取得し、
+     * クリック座標であるe.clientX,e.clientYからその分を引く
+     * ※クリック座標はdocumentからの位置を返すため
+     * ※rectはスクロール量によって値が変わるので、onClick()内でつど定義
+     */
+    var rect = e.target.getBoundingClientRect();
+	let succesly=false;
+    clickx = e.clientX - rect.left;
+    clicky = e.clientY - rect.top;
+	for(let i =0; i < 3; i++){
+		for(let j=0; j< 3;j++){
+			//どのマスがクリックされたのか
+			if(lineHeight*i+canvas.height/10<clicky&&lineHeight*(i+1)+canvas.height/10>clicky){
+				if(lineWidth*j+canvas.width*0.1<clickx&&lineWidth*(j+1)+canvas.width*0.1>clickx){
+					if(grid[i][j]==0){
+						grid[i][j]=1;
+						succesly=true;
+					}
+				}
+			}		
+		}
+	}
+	if(succesly==true){
+		draw();
+		endgame();
+		aiplayer();
+		draw();
+		endgame();
+	}
+}
+//ゲーム終了の関数
+//各マスを管理する変数gridで縦・横・斜めを同一プレイヤーが取得していたら、
+//ユーザーの勝敗を表記し、変数gridをリセットする。
+function endgame(){
+	let finish =  false;//勝敗が決定したらTrue
+	//縦横の判定
+	for(let i =0; i < 3; i++){
+		if(grid[i][0]==1&& grid[i][1]==1 &&grid[i][2]==1){
+			finish=true;
+			draw() ;
+			alert("win");
+		}else if(grid[i][0]==2&& grid[i][1]==2 &&grid[i][2]==2){
+			finish=true;
+			draw() ;
+			alert("lose");
+		}
+		if(grid[0][i]==1&& grid[1][i]==1 &&grid[2][i]==1){
+			finish=true;
+			draw() ;
+			alert("win");
+		}else if(grid[0][i]==2&& grid[1][i]==2 &&grid[2][i]==2){
+			finish=true;
+			draw() ;
+			alert("lose");
+		}
+	}
+	//斜めの判定
+	if(grid[0][0]==1&& grid[1][1]==1 &&grid[2][2]==1){
+		finish=true;
+		draw() ;
+		alert("win");
+	}else if(grid[0][0]==2&& grid[1][1]==2 &&grid[2][2]==2){
+		finish=true;
+		draw() ;
+		alert("lose");
+	}
+	//斜めの判定
+	if(grid[2][0]==1&& grid[1][1]==1 &&grid[0][2]==1){
+		finish=true;
+		draw() ;
+		alert("win");
+	}else if(grid[2][0]==2&& grid[1][1]==2 &&grid[0][2]==2){
+		finish=true;
+		draw() ;
+		alert("lose");
+	}
+	//縦・横・斜めの判定で勝敗がついたときリセット
+	if(finish==true){
+		for(let i =0; i < 3; i++){
+			for(let j=0; j< 3;j++){
+				grid[i][j]=0;
+			}
+		}
+		draw() ;//描画をリセット
+	}
+}
+//対戦相手のNPC
+//左上から順に空いてるマスを選択する。
+function aiplayer(){
+	let xi=0;
+	let yi=0;
+	//上の行から確認する。
+	for(let i =0; i < 3; i++){
+		//行を左から確認する
+		for(let j=0; j< 3;j++){
+			if(grid[i][j]==0){//マスが空いていたら
+				grid[i][j]=2;
+				return;
+			}
+		}
+	}
+}
+
+drawSquare() ;
+setInterval(draw, 500);
+canvas.addEventListener('click', onClick, false);
+</script>
+
+</body>
+</html>
